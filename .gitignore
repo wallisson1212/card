@@ -1,1 +1,4 @@
 node_modules
+
+# ignore built example dist
+custom-card-component/exemplo/dist/

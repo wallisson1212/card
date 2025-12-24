@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "cd custom-card-component/exemplo && npm ci && npm run build",
+    "dev": "cd custom-card-component/exemplo && npm install && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
