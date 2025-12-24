@@ -1,0 +1,231 @@
+:root {
+  --card-border: 1px solid rgba(0,0,0,0.08);
+  --card-radius: 10px;
+}
+
+/* Actions (edit / download) */
+.card__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+  align-items: center;
+}
+
+.card__action-button {
+  background: rgba(0,0,0,0.06);
+  border: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.card__action-button:focus { outline: 2px solid rgba(109,150,255,0.22); }
+
+.card__action-button--primary { background: rgba(109,150,255,0.12); }
+
+.card {
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  padding: 1rem;
+  background: var(--card-background, #fff);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  transition: transform 0.18s cubic-bezier(.2,.9,.3,1), box-shadow 0.18s cubic-bezier(.2,.9,.3,1);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  will-change: transform, box-shadow;
+}
+
+.card:focus {
+  outline: 3px solid rgba(109,150,255,0.22);
+  box-shadow: 0 18px 44px rgba(109,150,255,0.10);
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 54px rgba(109,150,255,0.18);
+  border-color: rgba(109,150,255,0.10);
+} 
+
+/* add a subtle glowing filled variant */
+.card--filled {
+  background: var(--card-background);
+  color: var(--card-foreground, #fff);
+  box-shadow: 0 10px 36px rgba(109,150,255,0.12);
+}
+
+
+/* Variantes */
+.card--filled { background-color: var(--card-background); color: var(--card-foreground, #fff); }
+.card--transparent { background: transparent; box-shadow: none; }
+.card--outlined { background: transparent; border: 1px dashed rgba(0,0,0,0.08); }
+.card--borderless { border: none; }
+
+/* Sizes (responsive scale) */
+.card--xsm { min-height: 36px; padding: 6px 8px; }
+.card--sm  { min-height: 44px; padding: 8px 10px; }
+.card--md  { min-height: 56px; padding: 12px 14px; }
+.card--lg  { min-height: 72px; padding: 16px 18px; }
+.card--xl  { min-height: 88px; padding: 20px 22px; }
+.card--xxl { min-height: 112px; padding: 24px 28px; }
+
+.card__left,
+.card__right {
+  display: flex;
+  align-items: center;
+}
+
+.card__left { margin-right: 0.25rem; }
+.card__right { margin-left: auto; }
+
+.card__title {
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.card__description {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Text sizes per card size */
+.card--xsm .card__title { font-size: 0.75rem; }
+.card--sm  .card__title { font-size: 0.875rem; }
+.card--md  .card__title { font-size: 1rem; }
+.card--lg  .card__title { font-size: 1.125rem; }
+.card--xl  .card__title { font-size: 1.25rem; }
+.card--xxl .card__title { font-size: 1.5rem; }
+
+.card--xsm .card__description { font-size: 0.625rem; }
+.card--sm  .card__description { font-size: 0.75rem; }
+.card--md  .card__description { font-size: 0.875rem; }
+.card--lg  .card__description { font-size: 1rem; }
+.card--xl  .card__description { font-size: 1.125rem; }
+.card--xxl .card__description { font-size: 1.25rem; }
+
+/* Icon sizes */
+.card--xsm .card__icon { width: 18px; height: 18px; }
+.card--sm  .card__icon { width: 20px; height: 20px; }
+.card--md  .card__icon { width: 24px; height: 24px; }
+.card--lg  .card__icon { width: 28px; height: 28px; }
+.card--xl  .card__icon { width: 32px; height: 32px; }
+.card--xxl .card__icon { width: 40px; height: 40px; }
+
+/* Responsivity: reduce padding & font on small screens */
+@media (max-width: 480px) {
+  .card { gap: 0.5rem; }
+  .card--md { padding: 10px; }
+}
+
+/* Disabled state */
+.card--disabled { opacity: 0.6; pointer-events: none; }
+
+/* Utility classes for color hooks (inline styles preferred) */
+.card__title--color { color: var(--title-color, inherit); }
+.card__description--color { color: var(--description-color, inherit); opacity: 0.95; }
+.card__icon--left { color: var(--left-icon-color, inherit); }
+.card__icon--right { color: var(--right-icon-color, inherit); }
+
+/* Layout for vertical-friendly content */
+.card__content { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+/* Accessibility focus */
+.card[tabindex] { cursor: pointer; }
+.card:focus {
+  outline: 3px solid rgba(109,150,255,0.22);
+  box-shadow: 0 18px 44px rgba(109,150,255,0.10);
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 54px rgba(109,150,255,0.18);
+  border-color: rgba(109,150,255,0.10);
+} 
+
+/* add a subtle glowing filled variant */
+.card--filled {
+  background: var(--card-background);
+  color: var(--card-foreground, #fff);
+  box-shadow: 0 10px 36px rgba(109,150,255,0.12);
+}
+
+
+/* Variantes */
+.card--filled { background-color: var(--card-background); color: var(--card-foreground, #fff); }
+.card--transparent { background: transparent; box-shadow: none; }
+.card--outlined { background: transparent; border: 1px dashed rgba(0,0,0,0.08); }
+.card--borderless { border: none; }
+
+/* Sizes (responsive scale) */
+.card--xsm { min-height: 36px; padding: 6px 8px; }
+.card--sm  { min-height: 44px; padding: 8px 10px; }
+.card--md  { min-height: 56px; padding: 12px 14px; }
+.card--lg  { min-height: 72px; padding: 16px 18px; }
+.card--xl  { min-height: 88px; padding: 20px 22px; }
+.card--xxl { min-height: 112px; padding: 24px 28px; }
+
+.card__left,
+.card__right {
+  display: flex;
+  align-items: center;
+}
+
+.card__left { margin-right: 0.25rem; }
+.card__right { margin-left: auto; }
+
+.card__title {
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.card__description {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Text sizes per card size */
+.card--xsm .card__title { font-size: 0.75rem; }
+.card--sm  .card__title { font-size: 0.875rem; }
+.card--md  .card__title { font-size: 1rem; }
+.card--lg  .card__title { font-size: 1.125rem; }
+.card--xl  .card__title { font-size: 1.25rem; }
+.card--xxl .card__title { font-size: 1.5rem; }
+
+.card--xsm .card__description { font-size: 0.625rem; }
+.card--sm  .card__description { font-size: 0.75rem; }
+.card--md  .card__description { font-size: 0.875rem; }
+.card--lg  .card__description { font-size: 1rem; }
+.card--xl  .card__description { font-size: 1.125rem; }
+.card--xxl .card__description { font-size: 1.25rem; }
+
+/* Icon sizes */
+.card--xsm .card__icon { width: 18px; height: 18px; }
+.card--sm  .card__icon { width: 20px; height: 20px; }
+.card--md  .card__icon { width: 24px; height: 24px; }
+.card--lg  .card__icon { width: 28px; height: 28px; }
+.card--xl  .card__icon { width: 32px; height: 32px; }
+.card--xxl .card__icon { width: 40px; height: 40px; }
+
+/* Responsivity: reduce padding & font on small screens */
+@media (max-width: 480px) {
+  .card { gap: 0.5rem; }
+  .card--md { padding: 10px; }
+}
+
+/* Disabled state */
+.card--disabled { opacity: 0.6; pointer-events: none; }
+
+/* Utility classes for color hooks (inline styles preferred) */
+.card__title--color { color: var(--title-color, inherit); }
+.card__description--color { color: var(--description-color, inherit); opacity: 0.95; }
+.card__icon--left { color: var(--left-icon-color, inherit); }
+.card__icon--right { color: var(--right-icon-color, inherit); }
+
+/* Layout for vertical-friendly content */
+.card__content { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+/* Accessibility focus */
+.card[tabindex] { cursor: pointer; }

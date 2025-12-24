@@ -1,0 +1,77 @@
+:root{ --background:#fff7e6; --text:#1f1f2d; --accent:#ff6b6b; --accent-2:#6d96ff; --page-bg:#fffefc }
+body{ font-family: system-ui, sans-serif; margin:0; padding:20px; background: linear-gradient(120deg, #fff7e6, #e8f7ff); color:var(--text)}
+#root{ max-width:1100px; margin:0 auto }
+
+header{ background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.65)); padding:12px; border-radius:8px; display:flex; align-items:center }
+
+button{ cursor:pointer }
+
+.controls { display:flex; gap:12px; align-items:center }
+.controls label{ font-size:12px; display:block; }
+.controls input[type="color"]{ width:34px; height:28px; border:none; padding:0; background:transparent; border-radius:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.04) }
+
+/* small palette */
+.palette{ display:flex; gap:8px; align-items:center }
+.palette button{ width:28px; height:28px; border-radius:6px; border:none; box-shadow: 0 6px 16px rgba(0,0,0,0.06) }
+
+
+/* All palettes panel */
+.all-palettes-btn{ padding:8px 12px; border-radius:10px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:none; font-weight:700; cursor:pointer; box-shadow: 0 12px 36px rgba(109,150,255,0.14); }
+.all-palettes-btn:hover{ transform: translateY(-2px); }
+
+.palette-panel{ position:fixed; left:50%; top:18%; transform:translateX(-50%); background: rgba(255,255,255,0.98); border-radius:12px; padding:18px; box-shadow: 0 30px 80px rgba(0,0,0,0.18); z-index:10002; max-width:min(1100px,96%); max-height:72vh; overflow:auto }
+.palette-panel-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap:12px }
+.palette-item{ border-radius:8px; padding:12px; display:flex; align-items:center; justify-content:center; height:92px; color:inherit; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow:hidden }
+.palette-item-btn{ width:100%; height:100%; border:none; background:transparent; color:inherit; text-align:center; font-weight:700; cursor:pointer; border-radius:8px }
+.palette-item-name{ text-shadow: 0 2px 8px rgba(0,0,0,0.28); font-size:14px }
+
+.btn-accent{ padding:8px 12px; background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:none; border-radius:10px; font-weight:700; box-shadow:0 8px 28px rgba(109,150,255,0.12); transition: transform 120ms ease, box-shadow 120ms ease }
+.btn-accent:hover{ transform: translateY(-2px); box-shadow:0 18px 46px rgba(109,150,255,0.16) }
+
+.btn-random{ padding:8px 12px; background:linear-gradient(90deg,#ffd36b,#ff6b6b); color:#111; border:none; border-radius:10px; font-weight:700; box-shadow:0 8px 24px rgba(255,107,107,0.12) }
+.btn-random:hover{ transform: translateY(-2px); box-shadow:0 18px 46px rgba(255,107,107,0.16) }
+
+.btn-reset{ 
+	padding:6px 10px;
+	background:transparent;
+	color:var(--text);
+	border:1px solid rgba(0,0,0,0.08);
+	border-radius:8px;
+	transition: background 150ms ease, transform 80ms ease, box-shadow 150ms ease;
+}
+.btn-reset:hover{ background:rgba(0,0,0,0.04); transform: translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.06) }
+.btn-reset:active{ transform: translateY(0); }
+.btn-reset:focus{ outline:2px solid rgba(255,107,107,0.12); outline-offset:2px; box-shadow:0 8px 24px rgba(255,107,107,0.08); }
+
+/* Variant quick buttons (Com Fundo / Sem Fundo / Apenas Borda) */
+.variant-btn{ padding:6px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; cursor:pointer; transition: background 120ms ease, transform 80ms ease; }
+.variant-btn:hover{ background:rgba(0,0,0,0.04); transform: translateY(-1px); }
+.variant-btn:active{ transform: translateY(0); }
+.variant-btn.active{ background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border-color: rgba(0,0,0,0.06); box-shadow: 0 12px 30px rgba(109,150,255,0.14); }
+.btn-dark{ padding:6px 10px; background:#333; color:#fff; border:none; border-radius:8px }
+
+.preview-panel{ padding:12px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2)); }
+
+/* Confetti animation */
+.confetti{ position:fixed; left:50%; top:22%; transform:translateX(-50%); width:420px; height:300px; pointer-events:none; overflow:visible; z-index:9999 }
+.confetti-piece{ position:absolute; top:-6px; width:12px; height:16px; border-radius:3px; opacity:0.98; transform:rotate(0deg); animation: confetti-fall 1.6s cubic-bezier(.12,.8,.24,1) forwards }
+@keyframes confetti-fall{ 0%{ transform: translateY(0) rotate(0); opacity:1 } 100%{ transform: translateY(280px) rotate(720deg); opacity:0 } }
+
+/* Toast */
+.toast{ position:fixed; top:16px; left:50%; transform:translateX(-50%); background: linear-gradient(90deg, rgba(255,107,107,0.95), rgba(109,150,255,0.95)); color:#fff; padding:8px 14px; border-radius:12px; font-size:13px; z-index:10000; box-shadow: 0 12px 36px rgba(109,150,255,0.14) }
+
+/* Card edit inputs */
+.card-edit-input{ padding:8px 10px; border-radius:6px; border:1px solid rgba(0,0,0,0.08); width:220px }
+.card-edit-actions button{ padding:6px 10px; border-radius:6px }
+
+
+/* Rename modal */
+.modal-overlay{ position:fixed; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.48)); display:flex; align-items:center; justify-content:center; z-index:10001 }
+.modal{ background:#fff; padding:16px; border-radius:10px; box-shadow:0 18px 40px rgba(0,0,0,0.18); min-width:320px }
+.modal .card-edit-input{ width:100% }
+
+.input-error{ color:#b00020; font-size:12px; margin-top:8px }
+
+footer{ display:flex; justify-content:space-between; align-items:center; font-size:13px; color:rgba(0,0,0,0.6) }
+@media (max-width:520px){ footer{ flex-direction:column; gap:8px; text-align:center } }
+
