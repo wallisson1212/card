@@ -40,3 +40,17 @@ jobs:
         with:
           name: build-log
           path: build.log
+
+      - name: Commit build log to repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH=ci-build-log-${{ github.run_id }}
+          git checkout -b "$BRANCH"
+          mkdir -p ci-logs
+          cp build.log "ci-logs/build-${{ github.run_id }}.log"
+          git add "ci-logs/build-${{ github.run_id }}.log"
+          git commit -m "ci: add build log for run ${{ github.run_id }}" || echo "no changes"
+          git push origin "$BRANCH"
