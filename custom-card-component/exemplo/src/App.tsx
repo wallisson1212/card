@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '../../src';
 
 const sizes = ['xsm', 'sm', 'md', 'lg', 'xl', 'xxl'] as const;
@@ -60,10 +60,15 @@ const App: React.FC = () => {
       descriptionColor: string;
       backgroundColor: string;
       font: string;
+      titleOffset?: { x: number; y: number };
+      descriptionOffset?: { x: number; y: number };
       size?: (typeof sizes)[number];
       variant?: (typeof variants)[number];
     }>
   >([]);
+
+  // Track the last created card id so we can show the download button beneath it
+  const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
 
   // Confetti/toast feedback on create
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
@@ -125,6 +130,25 @@ const App: React.FC = () => {
   const [editingTitle, setEditingTitle] = useState<string>('');
   const [editingDescription, setEditingDescription] = useState<string>('');
 
+  // Estados para edição de cores do card
+  const [editingTitleColor, setEditingTitleColor] = useState<string>('#000000');
+  const [editingDescriptionColor, setEditingDescriptionColor] = useState<string>('#000000');
+  const [editingBackgroundColor, setEditingBackgroundColor] = useState<string>('#ffffff');
+  // Estados para mover texto (posições locais enquanto edita)
+  const [editingMoveMode, setEditingMoveMode] = useState<boolean>(false);
+  const [editingTitlePos, setEditingTitlePos] = useState<{ x: number; y: number }>({ x: 32, y: 72 });
+  const [editingDescriptionPos, setEditingDescriptionPos] = useState<{ x: number; y: number }>({ x: 32, y: 120 });
+  const draggingRef = useRef<null | { type: 'title' | 'desc'; startX: number; startY: number; origX: number; origY: number }>(null);
+
+  // Single card move-text states (preview while creating)
+  const [singleMoveMode, setSingleMoveMode] = useState<boolean>(false);
+  const [singleTitlePos, setSingleTitlePos] = useState<{ x: number; y: number }>({ x: 32, y: 72 });
+  const [singleDescriptionPos, setSingleDescriptionPos] = useState<{ x: number; y: number }>({ x: 32, y: 120 });
+  const singleDraggingRef = useRef<null | { type: 'title' | 'desc'; startX: number; startY: number; origX: number; origY: number }>(null);
+  // Committed positions are applied to the preview Card only when explicitly saved
+  const [committedSingleTitlePos, setCommittedSingleTitlePos] = useState<{ x: number; y: number } | null>(null);
+  const [committedSingleDescriptionPos, setCommittedSingleDescriptionPos] = useState<{ x: number; y: number } | null>(null);
+
   // Error state for inline edits
   const [editingError, setEditingError] = useState<string | null>(null);
 
@@ -141,7 +165,17 @@ const App: React.FC = () => {
   };
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  type DemoCard = { title?: string; description?: string; backgroundColor?: string; titleColor?: string; descriptionColor?: string; font?: string };
+  type DemoCard = { title?: string; description?: string; backgroundColor?: string; titleColor?: string; descriptionColor?: string; font?: string; titleOffset?: { x: number; y: number }; descriptionOffset?: { x: number; y: number } };
+
+  // Break text into chunks of `n` characters (simple fixed-width wrap per request)
+  const chunkText = (s: string, n = 20) => {
+    const out: string[] = [];
+    for (let i = 0; i < s.length; i += n) out.push(s.slice(i, i + n));
+    return out;
+  };
+
+  const formatForDisplay = (s?: string) => (s ? chunkText(s, 20).join('\n') : '');
+
   const buildSvgForCard = (card: DemoCard) => {
   /* eslint-enable @typescript-eslint/no-unused-vars */
     const width = 900;
@@ -164,7 +198,22 @@ const App: React.FC = () => {
       bgFill = card.backgroundColor;
     }
 
-    const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">\n${defs}\n  <rect x="0" y="0" width="100%" height="100%" rx="18" fill="${bgFill}" />\n  <style>\n    .title{ font-family: ${fontFamily}; font-size: 40px; font-weight:800;}\n    .desc{ font-family: ${fontFamily}; font-size: 18px; opacity:0.95;}\n  </style>\n  <g transform="translate(${padding},${padding})">\n    <text x="0" y="72" class="title" fill="${card.titleColor || '#000'}">${title}</text>\n    <text x="0" y="120" class="desc" fill="${card.descriptionColor || '#222'}">${description}</text>\n  </g>\n</svg>`;
+    // Prepare multi-line tspans for title and description (20 chars per line)
+    const titleLines = chunkText(title, 20);
+    const descLines = chunkText(description, 20);
+    const titleX = (card.titleOffset && card.titleOffset.x) ?? 0;
+    const titleY = (card.titleOffset && card.titleOffset.y) ?? 72;
+    const descX = (card.descriptionOffset && card.descriptionOffset.x) ?? 0;
+    const descY = (card.descriptionOffset && card.descriptionOffset.y) ?? 120;
+
+    const titleTspans = titleLines
+      .map((l, i) => `    <tspan x="${titleX}" ${i === 0 ? `dy="0"` : `dy="44"`}>${l}</tspan>`)
+      .join('\n');
+    const descTspans = descLines
+      .map((l, i) => `    <tspan x="${descX}" ${i === 0 ? `dy="0"` : `dy="22"`}>${l}</tspan>`)
+      .join('\n');
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">\n${defs}\n  <rect x="0" y="0" width="100%" height="100%" rx="18" fill="${bgFill}" />\n  <style>\n    .title{ font-family: ${fontFamily}; font-size: 40px; font-weight:800;}\n    .desc{ font-family: ${fontFamily}; font-size: 18px; opacity:0.95;}\n  </style>\n  <g transform="translate(${padding},${padding})">\n    <text x="${titleX}" y="${titleY}" class="title" fill="${card.titleColor || '#000'}">\n${titleTspans}\n    </text>\n    <text x="${descX}" y="${descY}" class="desc" fill="${card.descriptionColor || '#222'}">\n${descTspans}\n    </text>\n  </g>\n</svg>`;
 
     return { svg, width, height };
   };
@@ -313,47 +362,72 @@ const App: React.FC = () => {
                       boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                     }}
                   >
-                    <div style={{ fontFamily: singleFont }}>
-                      <Card
-                        title={singleTitleText}
-                        description={singleDescriptionText}
-                        titleColor={singleTitleColor}
-                        descriptionColor={singleDescriptionColor}
-                        size={singleSize}
-                        variant={singleVariant}
-                        backgroundColor={singleBackgroundColor}
-                        fontFamily={singleFont}
-                        showActions
-                        onDownload={(blob?: Blob, html?: string) => {
-                          try {
-                            const usedBlob = blob ?? (html ? new Blob([html], { type: 'text/html' }) : undefined);
-                            if (!usedBlob) {
-                              setToastMessage('Falha no download');
-                              setTimeout(() => setToastMessage(''), 2000);
-                              return;
-                            }
-                            const url = URL.createObjectURL(usedBlob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `${(singleTitleText || 'card').replace(/\s+/g, '_')}.html`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            if (typeof URL.revokeObjectURL === 'function') {
-                              URL.revokeObjectURL(url);
-                            }
-                            setToastMessage('Download iniciado');
-                            setShowConfetti(true);
-                            setTimeout(() => setShowConfetti(false), 1200);
-                            setTimeout(() => setToastMessage(''), 2000);
-                          } catch (err) {
-                            console.error('Erro no download', err);
-                            setToastMessage('Falha no download');
-                            setTimeout(() => setToastMessage(''), 2000);
-                          }
-                        }}
-                      />
-                    </div>
+                      <div style={{ fontFamily: singleFont }}>
+                        <Card
+                          title={singleTitleText}
+                          description={singleDescriptionText}
+                          titleColor={singleTitleColor}
+                          descriptionColor={singleDescriptionColor}
+                          size={singleSize}
+                          variant={singleVariant}
+                          backgroundColor={singleBackgroundColor}
+                          fontFamily={singleFont}
+                          // Show live dragged offsets while move mode is active, otherwise show committed (or none)
+                          titleOffset={singleMoveMode ? singleTitlePos : (committedSingleTitlePos ?? undefined)}
+                          descriptionOffset={singleMoveMode ? singleDescriptionPos : (committedSingleDescriptionPos ?? undefined)}
+                        />
+
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                          <button onClick={() => setSingleMoveMode((s) => !s)}>{singleMoveMode ? 'Fechar mover' : 'Mover Texto'}</button>
+                          {singleMoveMode && (
+                            <button onClick={() => { setSingleMoveMode(false); setToastMessage('Posição salva'); setTimeout(() => setToastMessage(null), 1400); }}>
+                              Salvar Posição
+                            </button>
+                          )}
+                          <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.6)' }}>Arraste os textos no preview</div>
+                        </div>
+
+                        {singleMoveMode && (
+                          <div
+                            onPointerMove={(e) => {
+                              if (!singleDraggingRef.current) return;
+                              const dx = e.clientX - singleDraggingRef.current.startX;
+                              const dy = e.clientY - singleDraggingRef.current.startY;
+                              if (singleDraggingRef.current.type === 'title') {
+                                setSingleTitlePos({ x: Math.max(0, singleDraggingRef.current.origX + dx), y: Math.max(0, singleDraggingRef.current.origY + dy) });
+                              } else {
+                                setSingleDescriptionPos({ x: Math.max(0, singleDraggingRef.current.origX + dx), y: Math.max(0, singleDraggingRef.current.origY + dy) });
+                              }
+                            }}
+                            onPointerUp={(e) => {
+                              if (singleDraggingRef.current) {
+                                try { (e.currentTarget as Element).releasePointerCapture((e as any).pointerId); } catch {}
+                              }
+                              singleDraggingRef.current = null;
+                            }}
+                            style={{ marginTop: 8, width: 360, height: 200, border: '1px solid rgba(0,0,0,0.06)', position: 'relative', background: singleBackgroundColor }}
+                          >
+                            <div
+                              style={{ position: 'absolute', left: singleTitlePos.x, top: singleTitlePos.y, cursor: 'grab', color: singleTitleColor, fontWeight: 800, whiteSpace: 'pre-wrap', lineHeight: 1.05 }}
+                              onPointerDown={(e) => {
+                                (e.currentTarget as Element).setPointerCapture((e as any).pointerId);
+                                singleDraggingRef.current = { type: 'title', startX: e.clientX, startY: e.clientY, origX: singleTitlePos.x, origY: singleTitlePos.y };
+                              }}
+                            >
+                              {formatForDisplay(singleTitleText)}
+                            </div>
+                            <div
+                              style={{ position: 'absolute', left: singleDescriptionPos.x, top: singleDescriptionPos.y, cursor: 'grab', color: singleDescriptionColor, whiteSpace: 'pre-wrap' }}
+                              onPointerDown={(e) => {
+                                (e.currentTarget as Element).setPointerCapture((e as any).pointerId);
+                                singleDraggingRef.current = { type: 'desc', startX: e.clientX, startY: e.clientY, origX: singleDescriptionPos.x, origY: singleDescriptionPos.y };
+                              }}
+                            >
+                              {formatForDisplay(singleDescriptionText)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                   </div>
                 </div>
               </div>
@@ -510,11 +584,13 @@ const App: React.FC = () => {
                         font: singleFont,
                         size: singleSize,
                         variant: singleVariant,
+                        titleOffset: committedSingleTitlePos ?? singleTitlePos,
+                        descriptionOffset: committedSingleDescriptionPos ?? singleDescriptionPos,
                       },
                       ...prev,
                     ]);
+                    setLastCreatedId(id);
                     setShowSingleControls(false);
-                    // trigger feedback
                     setShowConfetti(true);
                     setToastMessage('Cartão criado');
                     setTimeout(() => setShowConfetti(false), 1400);
@@ -557,81 +633,193 @@ const App: React.FC = () => {
                     size={card.size}
                     variant={card.variant}
                     backgroundColor={card.backgroundColor}
+                    // If this card is being edited and move mode is active, show the live edit positions
+                    titleOffset={editingCardId === card.id && editingMoveMode ? editingTitlePos : card.titleOffset}
+                    descriptionOffset={editingCardId === card.id && editingMoveMode ? editingDescriptionPos : card.descriptionOffset}
                   />
                 </div>
 
                 {editingCardId === card.id ? (
                   <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <input
-                      aria-label={`edit-title-${card.id}`}
-                      value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
-                    />
-                    <input
-                      aria-label={`edit-description-${card.id}`}
-                      value={editingDescription}
-                      onChange={(e) => setEditingDescription(e.target.value)}
-                    />
-                    {editingError && (
-                      <div className="input-error" role="alert">
-                        {editingError}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ fontSize: 12 }}>Título (cor)</label>
+                      <input
+                        aria-label={`edit-title-color-${card.id}`}
+                        type="color"
+                        value={editingTitleColor}
+                        onChange={(e) => setEditingTitleColor(e.target.value)}
+                      />
+                      <label style={{ fontSize: 12 }}>Descrição (cor)</label>
+                      <input
+                        aria-label={`edit-description-color-${card.id}`}
+                        type="color"
+                        value={editingDescriptionColor}
+                        onChange={(e) => setEditingDescriptionColor(e.target.value)}
+                      />
+
+                      <label style={{ fontSize: 12 }}>Cor de Fundo</label>
+                      <input
+                        aria-label={`edit-bg-color-${card.id}`}
+                        type="color"
+                        value={editingBackgroundColor}
+                        onChange={(e) => setEditingBackgroundColor(e.target.value)}
+                      />
+
+                      <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                        {techPalettes.slice(0, 8).map((p) => (
+                          <button
+                            key={p.name}
+                            onClick={() => {
+                              setEditingTitleColor(p.titleColor);
+                              setEditingDescriptionColor(p.descriptionColor);
+                              setEditingBackgroundColor(p.backgroundColor);
+                            }}
+                            style={{ padding: 6, borderRadius: 6, border: '1px solid rgba(0,0,0,0.06)', background: p.backgroundColor, color: p.titleColor }}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
                       </div>
-                    )}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => {
-                          const trimmed = editingTitle.trim();
-                          if (!trimmed) {
-                            setEditingError('O nome não pode ser vazio');
-                            setTimeout(() => setEditingError(null), 2000);
-                            return;
-                          }
-                          setCreatedCards((prev) =>
-                            prev.map((x) =>
-                              x.id === card.id
-                                ? { ...x, title: trimmed, description: editingDescription }
-                                : x
-                            )
-                          );
-                          setEditingCardId(null);
-                          setToastMessage('Cartão atualizado');
-                          setTimeout(() => setToastMessage(null), 1400);
-                        }}
-                      >
-                        Salvar
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingCardId(null);
-                          setEditingError(null);
-                        }}
-                      >
-                        Cancelar
-                      </button>
+
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                        <button onClick={() => setEditingMoveMode((s) => !s)}>{editingMoveMode ? 'Fechar mover' : 'Mover Texto'}</button>
+                        <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.6)' }}>Arraste os textos no preview</div>
+                      </div>
+
+                      {editingMoveMode && (
+                        <div
+                          onPointerMove={(e) => {
+                            if (!draggingRef.current) return;
+                            const dx = e.clientX - draggingRef.current.startX;
+                            const dy = e.clientY - draggingRef.current.startY;
+                            if (draggingRef.current.type === 'title') {
+                              setEditingTitlePos({ x: Math.max(0, draggingRef.current.origX + dx), y: Math.max(0, draggingRef.current.origY + dy) });
+                            } else {
+                              setEditingDescriptionPos({ x: Math.max(0, draggingRef.current.origX + dx), y: Math.max(0, draggingRef.current.origY + dy) });
+                            }
+                          }}
+                          onPointerUp={(e) => {
+                            if (draggingRef.current) {
+                              try { (e.currentTarget as Element).releasePointerCapture((e as any).pointerId); } catch {}
+                            }
+                            draggingRef.current = null;
+                          }}
+                          style={{ marginTop: 8, width: 360, height: 200, border: '1px solid rgba(0,0,0,0.06)', position: 'relative', background: editingBackgroundColor }}
+                        >
+                          <div
+                            style={{ position: 'absolute', left: editingTitlePos.x, top: editingTitlePos.y, cursor: 'grab', color: editingTitleColor, fontWeight: 800, whiteSpace: 'pre-wrap', lineHeight: 1.05 }}
+                            onPointerDown={(e) => {
+                              (e.currentTarget as Element).setPointerCapture((e as any).pointerId);
+                              draggingRef.current = { type: 'title', startX: e.clientX, startY: e.clientY, origX: editingTitlePos.x, origY: editingTitlePos.y };
+                            }}
+                          >
+                            {formatForDisplay(card.title)}
+                          </div>
+                          <div
+                            style={{ position: 'absolute', left: editingDescriptionPos.x, top: editingDescriptionPos.y, cursor: 'grab', color: editingDescriptionColor, whiteSpace: 'pre-wrap' }}
+                            onPointerDown={(e) => {
+                              (e.currentTarget as Element).setPointerCapture((e as any).pointerId);
+                              draggingRef.current = { type: 'desc', startX: e.clientX, startY: e.clientY, origX: editingDescriptionPos.x, origY: editingDescriptionPos.y };
+                            }}
+                          >
+                            {formatForDisplay(card.description)}
+                          </div>
+
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => {
+                            if (editingCardId) {
+                              setCreatedCards((prev) =>
+                                prev.map((x) => (x.id === editingCardId ? { ...x, titleOffset: editingTitlePos, descriptionOffset: editingDescriptionPos } : x))
+                              );
+                              setEditingMoveMode(false);
+                              setToastMessage('Posição salva');
+                              setTimeout(() => setToastMessage(null), 1400);
+                            }
+                          }}
+                        >
+                          Salvar Posição
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setCreatedCards((prev) =>
+                              prev.map((x) =>
+                                x.id === card.id
+                                  ? {
+                                      ...x,
+                                      titleColor: editingTitleColor,
+                                      descriptionColor: editingDescriptionColor,
+                                      backgroundColor: editingBackgroundColor,
+                                      titleOffset: editingTitlePos,
+                                      descriptionOffset: editingDescriptionPos,
+                                    }
+                                  : x
+                              )
+                            );
+                            setEditingCardId(null);
+                            setEditingMoveMode(false);
+                            setToastMessage('Cores atualizadas');
+                            setTimeout(() => setToastMessage(null), 1400);
+                          }}
+                        >
+                          Salvar
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setEditingCardId(null);
+                            setEditingMoveMode(false);
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-  
-                    <button
-                      onClick={() => {
-                        setEditingCardId(card.id);
-                        setEditingTitle(card.title);
-                        setEditingDescription(card.description);
-                      }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCreatedCards((prev) => prev.filter((x) => x.id !== card.id));
-                        setToastMessage('Cartão removido');
-                        setTimeout(() => setToastMessage(null), 1400);
-                      }}
-                    >
-                      Excluir
-                    </button>
-                  </div>
+                  <>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+
+                      <button
+                        onClick={() => {
+                          setEditingCardId(card.id);
+                          setEditingTitleColor(card.titleColor);
+                          setEditingDescriptionColor(card.descriptionColor);
+                          setEditingBackgroundColor(card.backgroundColor);
+                          setEditingTitlePos(card.titleOffset ?? { x: 32, y: 72 });
+                          setEditingDescriptionPos(card.descriptionOffset ?? { x: 32, y: 120 });
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCreatedCards((prev) => prev.filter((x) => x.id !== card.id));
+                          setToastMessage('Cartão removido');
+                          setTimeout(() => setToastMessage(null), 1400);
+                        }}
+                      >
+                        Excluir
+                      </button>
+                      {card.id === lastCreatedId && (
+                        <button
+                          onClick={async () => {
+                            const { svg, width, height } = buildSvgForCard({ title: card.title, description: card.description, titleColor: card.titleColor, descriptionColor: card.descriptionColor, backgroundColor: card.backgroundColor, font: card.font, titleOffset: card.titleOffset, descriptionOffset: card.descriptionOffset });
+                            await downloadSvgAsPng(svg, width, height, `${card.title || 'cartao'}.png`);
+                            setToastMessage('Download iniciado');
+                            setTimeout(() => setToastMessage(null), 1400);
+                          }}
+                        >
+                          Baixar
+                        </button>
+                      )}
+                    </div>
+
+                  </>
                 )}
               </div>
             ))}

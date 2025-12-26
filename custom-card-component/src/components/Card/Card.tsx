@@ -20,8 +20,10 @@ const Card: React.FC<CardProps> = ({
   showActions = false,
   onEdit,
   onDownload,
-  downloadFileName = 'card.html',
+  downloadFileName = 'cartao.html',
   fontFamily,
+  titleOffset,
+  descriptionOffset,
   ['aria-label']: ariaLabel,
   ['data-testid']: testId,
 }) => {
@@ -42,6 +44,14 @@ const Card: React.FC<CardProps> = ({
 
   const titleStyle: React.CSSProperties | undefined = titleColor ? { color: titleColor } : undefined;
   const descriptionStyle: React.CSSProperties | undefined = descriptionColor ? { color: descriptionColor } : undefined;
+
+  // If offsets are provided, position the text absolutely inside the content area
+  const contentStyle: React.CSSProperties = { position: 'relative', minHeight: 140 };
+  const titlePositionStyle: React.CSSProperties | undefined = titleOffset ? { position: 'absolute', left: titleOffset.x, top: titleOffset.y } : undefined;
+  const descriptionPositionStyle: React.CSSProperties | undefined = descriptionOffset ? { position: 'absolute', left: descriptionOffset.x, top: descriptionOffset.y } : undefined;
+
+  const mergedTitleStyle: React.CSSProperties = { ...(titleStyle || {}), ...(titlePositionStyle || {}) };
+  const mergedDescriptionStyle: React.CSSProperties = { ...(descriptionStyle || {}), ...(descriptionPositionStyle || {}) };
 
   const getIconText = (node?: React.ReactNode) => {
     if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -108,7 +118,7 @@ const Card: React.FC<CardProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = downloadFileName || 'card.html';
+      a.download = downloadFileName || 'cartao.html';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -130,10 +140,10 @@ const Card: React.FC<CardProps> = ({
     >
       {leftIcon && <div className={`${styles['card__left']} ${styles['card__icon']} ${styles['card__icon--left']}`}>{leftIcon}</div>}
 
-      <div className={styles['card__content']}>
-        <h3 className={`${styles['card__title']} ${styles['card__title--color']}`} style={titleStyle}>{title}</h3>
+      <div className={styles['card__content']} style={contentStyle}>
+        <h3 className={`${styles['card__title']} ${styles['card__title--color']}`} style={mergedTitleStyle}>{title}</h3>
         {description && (
-          <p className={`${styles['card__description']} ${styles['card__description--color']}`} style={descriptionStyle}>{description}</p>
+          <p className={`${styles['card__description']} ${styles['card__description--color']}`} style={mergedDescriptionStyle}>{description}</p>
         )}
       </div>
 

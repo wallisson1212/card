@@ -23,6 +23,10 @@ export interface CardProps {
   /** Font family to use when rendering / downloading */
   fontFamily?: string;
 
+  /** Optional absolute offsets (pixels) to position title and description inside the card */
+  titleOffset?: { x: number; y: number };
+  descriptionOffset?: { x: number; y: number };
+
   size?: CardSize;
   variant?: CardVariant;
 
